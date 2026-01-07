@@ -1,0 +1,7 @@
+{
+  "name": "BellaGestão - Mobile Sales Manager",
+  "description": "A professional mobile-first application for cosmetic sales management, customer tracking, inventory control, and debt monitoring.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
