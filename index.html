@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -9,6 +10,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
+      // Pré-detecção para evitar flash de cor clara em sistemas escuros
+      (function() {
+        const stored = localStorage.getItem('bellagestao_v1');
+        let theme;
+        if (stored) {
+          try { theme = JSON.parse(stored).profile.theme; } catch(e) {}
+        }
+        if (!theme) {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+
       tailwind.config = {
         darkMode: 'class',
         theme: {
@@ -49,6 +65,40 @@
         }
         .animate-fade-in {
             animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* Personalização da Barra de Rolagem BellaGestão */
+        .beauty-scroll::-webkit-scrollbar {
+            height: 4px;
+        }
+        .beauty-scroll::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 0 10px;
+        }
+        .beauty-scroll::-webkit-scrollbar-thumb {
+            background: #f43f5e33; /* rose-500 com opacidade */
+            border-radius: 20px;
+        }
+        .dark .beauty-scroll::-webkit-scrollbar-thumb {
+            background: #fb718544; /* rose-400 com opacidade */
+        }
+        .beauty-scroll:hover::-webkit-scrollbar-thumb {
+            background: #f43f5e88;
+        }
+
+        /* Máscara de gradiente para indicar mais conteúdo */
+        .scroll-mask {
+            mask-image: linear-gradient(to right, black 85%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+        }
+        
+        /* Ocultar barra de rolagem em navegadores que não suportam webkit se necessário */
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
     </style>
 <script type="importmap">

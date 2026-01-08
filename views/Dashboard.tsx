@@ -1,20 +1,39 @@
-
 import React from 'react';
 import { Card, Button } from '../components/UI';
-import { ShoppingCart, UserPlus, PackagePlus, ArrowUpRight, Target } from 'lucide-react';
+import { ShoppingCart, UserPlus, PackagePlus, ArrowUpRight, BellRing, CheckCircle2 } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 import { View } from '../types';
+
+interface Reminder {
+  customerName: string;
+  amount: number;
+  id: string;
+}
 
 interface DashboardProps {
   stats: any;
   setView: (view: View) => void;
+  userName: string;
+  reminders: Reminder[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ stats, setView }) => {
+const Dashboard: React.FC<DashboardProps> = ({ stats, setView, userName, reminders }) => {
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 0 && hour < 6) return 'Boa madrugada';
+    if (hour >= 6 && hour < 12) return 'Bom dia';
+    if (hour >= 12 && hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  };
+
+  const displayName = userName.trim() ? userName.split(' ')[0] : 'Consultora';
+
   return (
     <div className="flex flex-col gap-6">
       <section>
-        <p className="text-gray-500 dark:text-slate-400 text-sm font-medium">Bom dia, Consultora</p>
+        <p className="text-gray-500 dark:text-slate-400 text-sm font-medium">
+          {getGreeting()}, {displayName}
+        </p>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-50">Resumo de Hoje</h2>
       </section>
 
@@ -67,19 +86,39 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, setView }) => {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-bold text-gray-400 dark:text-slate-600 uppercase tracking-widest px-1">Metas e Lembretes</h3>
-        <Card className="flex items-center gap-4 py-4">
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 rounded-2xl">
-            <Target size={24} />
-          </div>
-          <div className="flex-1">
-            <h4 className="font-bold text-sm dark:text-slate-200">Meta Bronze</h4>
-            <div className="w-full bg-gray-100 dark:bg-slate-800 h-1.5 rounded-full mt-1 overflow-hidden">
-              <div className="bg-indigo-500 h-full w-[65%]"></div>
+        <h3 className="text-sm font-bold text-gray-400 dark:text-slate-600 uppercase tracking-widest px-1">Lembretes</h3>
+        {reminders.length > 0 ? (
+          <Card 
+            className="flex items-center gap-4 py-4 border-l-4 border-l-indigo-500 active:scale-[0.98] transition-transform cursor-pointer"
+            onClick={() => setView('debtors')}
+          >
+            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 rounded-2xl">
+              <BellRing size={24} />
             </div>
-            <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1">65% concluído • Faltam R$ 450,00</p>
-          </div>
-        </Card>
+            <div className="flex-1 overflow-hidden">
+              <h4 className="font-bold text-sm dark:text-slate-200 truncate">Vencendo Hoje</h4>
+              <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">
+                {reminders.length === 1 
+                  ? `${reminders[0].customerName} deve ${formatCurrency(reminders[0].amount)}`
+                  : `${reminders.length} clientes possuem parcelas para hoje`
+                }
+              </p>
+            </div>
+            <div className="bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse">
+              HOJE
+            </div>
+          </Card>
+        ) : (
+          <Card className="flex items-center gap-4 py-4 border-dashed border-2 border-gray-100 dark:border-slate-800 opacity-60">
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 rounded-2xl">
+              <CheckCircle2 size={24} />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-sm dark:text-slate-400 text-gray-400">Tudo em dia!</h4>
+              <p className="text-[10px] text-gray-300 dark:text-slate-600 mt-0.5">Nenhum pagamento pendente para hoje.</p>
+            </div>
+          </Card>
+        )}
       </section>
     </div>
   );
