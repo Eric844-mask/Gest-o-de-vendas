@@ -1,5 +1,5 @@
 
-export type View = 'dashboard' | 'customers' | 'inventory' | 'sales' | 'debtors' | 'profile' | 'new-sale';
+export type View = 'dashboard' | 'customers' | 'inventory' | 'sales' | 'debtors' | 'profile' | 'new-sale' | 'add-customer' | 'add-product';
 
 export interface Customer {
   id: string;
@@ -46,6 +46,7 @@ export interface UserProfile {
   name: string;
   businessName: string;
   currency: string;
+  theme?: 'light' | 'dark';
 }
 
 export interface AppData {

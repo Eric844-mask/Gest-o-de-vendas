@@ -1,19 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Input, Button, Badge, Select } from '../components/UI';
-import { Search, PackagePlus, AlertCircle, X, ChevronRight } from 'lucide-react';
+import { Search, PackagePlus, AlertCircle, X } from 'lucide-react';
 import { Product } from '../types';
 import { formatCurrency } from '../utils/format';
 
 interface InventoryProps {
   products: Product[];
   addProduct: (p: any) => void;
+  initialIsAdding?: boolean;
 }
 
 const CATEGORIES = ['Fragrâncias', 'Maquiagem', 'Cuidados com a Pele', 'Cabelo', 'Corpo e Banho'];
 
-const Inventory: React.FC<InventoryProps> = ({ products, addProduct }) => {
-  const [isAdding, setIsAdding] = useState(false);
+const Inventory: React.FC<InventoryProps> = ({ products, addProduct, initialIsAdding = false }) => {
+  const [isAdding, setIsAdding] = useState(initialIsAdding);
   const [searchTerm, setSearchTerm] = useState('');
   
   const [form, setForm] = useState({
@@ -23,6 +24,11 @@ const Inventory: React.FC<InventoryProps> = ({ products, addProduct }) => {
     stock: '',
     minStock: '2'
   });
+
+  // Sincroniza o estado caso a prop mude via navegação
+  useEffect(() => {
+    if (initialIsAdding) setIsAdding(true);
+  }, [initialIsAdding]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,20 +67,62 @@ const Inventory: React.FC<InventoryProps> = ({ products, addProduct }) => {
       </div>
 
       {isAdding && (
-        <Card className="flex flex-col gap-4 relative">
-          <button onClick={() => setIsAdding(false)} className="absolute right-4 top-4 text-gray-400"><X size={20} /></button>
-          <h3 className="font-bold text-lg">Novo Produto</h3>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <Input label="Nome do Produto" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Ex: Perfume Malbec 100ml" />
-            <Select label="Categoria" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
+        <Card className="flex flex-col gap-4 relative border-2 border-rose-100 shadow-xl animate-fade-in ring-4 ring-rose-50/50">
+          <button 
+            onClick={() => setIsAdding(false)} 
+            className="absolute right-4 top-4 text-gray-300 hover:text-gray-500 p-1 transition-colors"
+          >
+            <X size={20} />
+          </button>
+          
+          <div className="flex flex-col gap-1">
+            <h3 className="font-bold text-xl text-slate-800 tracking-tight">Novo Produto</h3>
+            <div className="h-1 w-12 bg-rose-200 rounded-full"></div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5 mt-2">
+            <Input 
+              label="Nome do Produto" 
+              value={form.name} 
+              onChange={e => setForm({...form, name: e.target.value})} 
+              placeholder="Ex: Perfume Malbec 100ml" 
+              autoFocus 
+            />
+            
+            <Select 
+              label="Categoria" 
+              value={form.category} 
+              onChange={e => setForm({...form, category: e.target.value})}
+            >
               {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
             </Select>
+
             <div className="grid grid-cols-2 gap-3">
-              <Input label="Preço (R$)" type="number" step="0.01" value={form.price} onChange={e => setForm({...form, price: e.target.value})} placeholder="0,00" />
-              <Input label="Estoque Inicial" type="number" value={form.stock} onChange={e => setForm({...form, stock: e.target.value})} placeholder="0" />
+              <Input 
+                label="Preço (R$)" 
+                type="number" 
+                step="0.01" 
+                value={form.price} 
+                onChange={e => setForm({...form, price: e.target.value})} 
+                placeholder="0,00" 
+              />
+              <Input 
+                label="Estoque Inicial" 
+                type="number" 
+                value={form.stock} 
+                onChange={e => setForm({...form, stock: e.target.value})} 
+                placeholder="0" 
+              />
             </div>
-            <Input label="Mínimo para Alerta" type="number" value={form.minStock} onChange={e => setForm({...form, minStock: e.target.value})} />
-            <Button type="submit" fullWidth>Adicionar ao Estoque</Button>
+
+            <Input 
+              label="Mínimo para Alerta" 
+              type="number" 
+              value={form.minStock} 
+              onChange={e => setForm({...form, minStock: e.target.value})} 
+            />
+            
+            <Button type="submit" fullWidth className="py-4 text-lg">Adicionar ao Estoque</Button>
           </form>
         </Card>
       )}

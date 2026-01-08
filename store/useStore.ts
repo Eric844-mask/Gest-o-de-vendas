@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { AppData, Customer, Product, Sale, Installment, UserProfile, View } from '../types';
 
 const STORAGE_KEY = 'bellagestao_v1';
@@ -11,22 +10,51 @@ const INITIAL_DATA: AppData = {
   installments: [],
   profile: {
     name: 'Consultora Bella',
-    businessName: 'Minha Loja de Beleza',
-    currency: 'BRL'
+    businessName: 'Gestão de Vendas',
+    currency: 'BRL',
+    theme: 'light'
   }
 };
 
 export const useStore = () => {
   const [data, setData] = useState<AppData>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : INITIAL_DATA;
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return INITIAL_DATA;
+      
+      const parsed = JSON.parse(stored);
+      return {
+        ...INITIAL_DATA,
+        ...parsed,
+        profile: { ...INITIAL_DATA.profile, ...(parsed.profile || {}) }
+      };
+    } catch (e) {
+      console.error("Failed to load data from localStorage", e);
+      return INITIAL_DATA;
+    }
   });
 
   const [currentView, setCurrentView] = useState<View>('dashboard');
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // Apply dark class to html element
+    if (data.profile.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [data]);
+
+  const toggleTheme = () => {
+    setData(prev => ({
+      ...prev,
+      profile: {
+        ...prev.profile,
+        theme: prev.profile.theme === 'dark' ? 'light' : 'dark'
+      }
+    }));
+  };
 
   const addCustomer = (customer: Omit<Customer, 'id' | 'createdAt'>) => {
     const newCustomer: Customer = {
@@ -62,7 +90,6 @@ export const useStore = () => {
       createdAt: now
     };
 
-    // Generate installments
     const newInstallments: Installment[] = [];
     const installmentAmount = saleData.total / saleData.installments;
     
@@ -80,7 +107,6 @@ export const useStore = () => {
     }
 
     setData(prev => {
-      // Update stock for each item
       const updatedProducts = prev.products.map(p => {
         const item = saleData.items.find(si => si.productId === p.id);
         if (item) {
@@ -111,7 +137,6 @@ export const useStore = () => {
     setData(prev => ({ ...prev, profile }));
   };
 
-  // Helper selectors
   const getCustomerStatus = (customerId: string) => {
     const customerInstallments = data.installments.filter(ins => {
       const sale = data.sales.find(s => s.id === ins.saleId);
@@ -128,7 +153,8 @@ export const useStore = () => {
 
   const getDashboardStats = () => {
     const today = new Date().setHours(0, 0, 0, 0);
-    const thisMonth = new Date().setDate(1);
+    const dateObj = new Date();
+    const thisMonth = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).getTime();
 
     const salesToday = data.sales.filter(s => s.createdAt >= today).reduce((acc, s) => acc + s.total, 0);
     const salesMonth = data.sales.filter(s => s.createdAt >= thisMonth).reduce((acc, s) => acc + s.total, 0);
@@ -150,6 +176,7 @@ export const useStore = () => {
     updateProfile,
     getCustomerStatus,
     getDashboardStats,
-    updateProductStock
+    updateProductStock,
+    toggleTheme
   };
 };

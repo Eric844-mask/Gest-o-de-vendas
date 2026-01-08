@@ -29,8 +29,12 @@ const App: React.FC = () => {
         return <Dashboard stats={getDashboardStats()} setView={setCurrentView} />;
       case 'customers':
         return <Customers customers={data.customers} addCustomer={addCustomer} getStatus={getCustomerStatus} />;
+      case 'add-customer':
+        return <Customers customers={data.customers} addCustomer={addCustomer} getStatus={getCustomerStatus} initialIsAdding={true} />;
       case 'inventory':
         return <Inventory products={data.products} addProduct={addProduct} />;
+      case 'add-product':
+        return <Inventory products={data.products} addProduct={addProduct} initialIsAdding={true} />;
       case 'new-sale':
         return <NewSale customers={data.customers} products={data.products} createSale={createSale} setView={setCurrentView} />;
       case 'debtors':
@@ -53,17 +57,25 @@ const App: React.FC = () => {
   const getTitle = () => {
     switch (currentView) {
       case 'dashboard': return data.profile.businessName;
-      case 'customers': return 'Clientes';
-      case 'inventory': return 'Estoque';
+      case 'customers':
+      case 'add-customer': return 'Clientes';
+      case 'inventory':
+      case 'add-product': return 'Estoque';
       case 'new-sale': return 'Nova Venda';
       case 'debtors': return 'Financeiro';
       case 'profile': return 'Meu Perfil';
-      default: return 'BellaGestão';
+      default: return 'Gestão de Vendas';
     }
   };
 
+  const currentLayoutView = () => {
+    if (currentView === 'add-customer') return 'customers';
+    if (currentView === 'add-product') return 'inventory';
+    return currentView;
+  };
+
   return (
-    <Layout currentView={currentView} setView={setCurrentView} title={getTitle()}>
+    <Layout currentView={currentLayoutView()} setView={setCurrentView} title={getTitle()}>
       {renderView()}
     </Layout>
   );
