@@ -151,7 +151,6 @@ export const useStore = () => {
     setData(prev => ({
       ...prev,
       customers: prev.customers.filter(c => c.id !== id),
-      // Opcional: Limpar parcelas relacionadas para evitar dados órfãos
       installments: prev.installments.filter(ins => {
         const sale = prev.sales.find(s => s.id === ins.saleId);
         return sale?.customerId !== id;
@@ -232,15 +231,58 @@ export const useStore = () => {
   };
 
   const getDashboardStats = () => {
-    const today = new Date().setHours(0, 0, 0, 0);
     const dateObj = new Date();
-    const thisMonth = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).getTime();
+    const today = new Date().setHours(0, 0, 0, 0);
+    const thisMonthStart = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).getTime();
+    const nextMonthStart = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 1).getTime();
+    
     const salesToday = data.sales.filter(s => s.createdAt >= today).reduce((acc, s) => acc + s.total, 0);
-    const salesMonth = data.sales.filter(s => s.createdAt >= thisMonth).reduce((acc, s) => acc + s.total, 0);
-    const totalReceivable = data.installments.filter(ins => !ins.paidAt).reduce((acc, ins) => acc + ins.amount, 0);
+    const salesMonth = data.sales.filter(s => s.createdAt >= thisMonthStart).reduce((acc, s) => acc + s.total, 0);
+    
+    const pendingInstallments = data.installments.filter(ins => !ins.paidAt);
+    const totalReceivable = pendingInstallments.reduce((acc, ins) => acc + ins.amount, 0);
+    
+    // Agrupamento mensal para projeção
+    const monthlyMap: Record<string, number> = {};
+    pendingInstallments.forEach(ins => {
+      const d = new Date(ins.dueDate);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthlyMap[key] = (monthlyMap[key] || 0) + ins.amount;
+    });
+
+    const sortedMonthKeys = Object.keys(monthlyMap).sort();
+    const currentMonthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+    
+    const receivableThisMonth = monthlyMap[currentMonthKey] || 0;
+    const receivableFuture = Object.keys(monthlyMap)
+      .filter(key => key > currentMonthKey)
+      .reduce((acc, key) => acc + monthlyMap[key], 0);
+
+    const receivablesByMonth = sortedMonthKeys.map(key => ({
+      key,
+      label: new Date(key + '-02').toLocaleString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', ''),
+      total: monthlyMap[key],
+      isCurrent: key === currentMonthKey
+    }));
+
+    const furthestInstallment = pendingInstallments.length > 0 
+      ? Math.max(...pendingInstallments.map(ins => ins.dueDate))
+      : null;
+
     const activeCustomers = data.customers.length;
     const lowStockItems = data.products.filter(p => p.stock <= p.minStock).length;
-    return { salesToday, salesMonth, totalReceivable, activeCustomers, lowStockItems };
+    
+    return { 
+      salesToday, 
+      salesMonth, 
+      totalReceivable, 
+      receivableThisMonth,
+      receivableFuture,
+      receivablesByMonth,
+      furthestInstallment,
+      activeCustomers, 
+      lowStockItems 
+    };
   };
 
   return {
